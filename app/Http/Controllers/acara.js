@@ -33,6 +33,8 @@ module.exports = function (router)
 		let longitude = req.body.longitude;
 		let latitude = req.body.latitude;
 
+		console.log(req.body)
+
 		promise.resolve()
 				.then(function(){
 					return [jwt.verify(token, 'secret_key'), Category.where('name', category).fetch()];
@@ -43,8 +45,8 @@ module.exports = function (router)
 						return res.send({status: 400, message: "Kategori event tidak ditemukan"});
 					}
 
-					let date_formated = moment(date, 'm/d/YYYY').format('YYYY-m-d');
-					
+					let date_formated = moment(date, 'mm/DD/YYYY').format('YYYY-mm-DD');
+					console.log(date_formated);
 					let data = {
 						name: name,
 						description: description,
