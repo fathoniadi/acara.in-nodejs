@@ -75,7 +75,7 @@ module.exports = function (router)
 		if(date_start && date_end)
 		{
 			start = moment(date_start, 'MM/DD/YYYY').format('YYYY-MM-DD');
-			end = moment(date_end, 'MM/DD/YYYY').format('YYYY-MM-DD');
+			end = moment(date_end, 'MM/DD/YYYY').add('1', 'day').format('YYYY-MM-DD');
 		}
 
 		var qkeyword = "";
