@@ -4,9 +4,17 @@ let promise = require('bluebird');
 let bcrypt = require('bcrypt');
 let jwt = require('jsonwebtoken');
 let moment = require('moment');
+let bookshelf = require('../../../vendor/database/bookshelf');
 
 module.exports = function (router)
 {
+
+	router.get('/cobawaktu', function(req, res, next){
+		let date_start = moment().format('YYYY-MM-DD');
+		let date_end = moment(date_start, 'YYYY-MM-DD').add('1', 'day').format('YYYY-MM-DD');
+		res.json({date_start, date_end});
+	})
+
 	router.get('/', function(req, res, next){
 		
 		promise.all([Acara.fetchAll()])
@@ -43,6 +51,68 @@ module.exports = function (router)
 	});
 
 
+	router.get('/:lat/:long', function(req, res, next){
+		
+		let lat = req.params.lat
+		let long = req.params.long
+
+		let keyword = req.query.keyword
+		let date_start = req.query.date_start
+		let date_end = req.query.date_end
+		let category = req.query.category
+		let max_distance = req.query.distance
+
+		var qcategory = ""
+
+		if(category)
+		{
+			qcategory = category
+		}
+
+		var start = moment().format('YYYY-MM-DD');
+		var end = moment(start, 'YYYY-MM-DD').add('1', 'day').format('YYYY-MM-DD');
+
+		if(date_start && date_end)
+		{
+			start = moment(date_start, 'MM/DD/YYYY').format('YYYY-MM-DD');
+			end = moment(date_end, 'MM/DD/YYYY').format('YYYY-MM-DD');
+		}
+
+		var qkeyword = "";
+
+		if(keyword)
+		{
+			qkeyword = keyword;
+		}
+
+		var distance = 25;
+
+		if(max_distance)
+		{
+			distance = max_distance;
+		}
+
+		let query = "SELECT acaras.*, ( 3959 * acos( cos( radians("+lat+") )"+
+		" * cos( radians( latitude ) ) * cos( radians( longitude ) - radians("+long+") ) "+
+		"+ sin( radians("+lat+") ) * sin( radians( latitude ) ) ) )"+
+		" AS distance FROM acaras where tanggal >= '"+start+"' and "+
+		" tanggal < '"+end+"' and category_id in (select id from categories where name like '%"+qcategory+"%') and "+
+		" name like '%"+qkeyword+"%' and description like '%"+qkeyword+"%'"
+		" HAVING distance < "+distance+" ORDER BY distance LIMIT 0 , 20;"
+
+		promise.all([bookshelf.knex.raw(query)])
+				.then(function(result){
+					let acaras = result[0][0];
+					if(acaras.length <= 0)
+					{
+						return res.send({status:404, message: "Acara tidak ada"});
+					}
+
+					return res.send({status: 200, acaras: acaras});
+				});
+	});
+
+
 
 	router.post('/', function(req, res, next){
 		let name = req.body.name;
@@ -64,7 +134,7 @@ module.exports = function (router)
 						return res.send({status: 400, message: "Kategori event tidak ditemukan"});
 					}
 
-					let date_formated = moment(date, 'mm/DD/YYYY').format('YYYY-mm-DD');
+					let date_formated = moment(date, 'MM/DD/YYYY').format('YYYY-MM-DD');
 					let data = {
 						name: name,
 						description: description,
