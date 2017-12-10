@@ -23,6 +23,26 @@ module.exports = function (router)
 	});
 
 
+	router.get('/:id', function(req, res, next){
+		let id = req.params.id;
+
+		promise.resolve()
+			   .then(function(){
+			   	return Acara.where("id", id).fetch({withRelated: {'user' : function(query){
+			   		//query.select(["name"]);
+			   	}, 'category' : function(query){
+			   		//query.get(['name']);
+			   	}}});
+			   })
+			   .then(function(result){
+			   	if(!result)
+			   		return res.send({status: 400, message: "Data Acara tidak ada"});
+			   	else
+			   		return res.send({status:200, data: result.toJSON()})
+			   });
+	});
+
+
 
 	router.post('/', function(req, res, next){
 		let name = req.body.name;
@@ -33,7 +53,6 @@ module.exports = function (router)
 		let longitude = req.body.longitude;
 		let latitude = req.body.latitude;
 
-		console.log(req.body)
 
 		promise.resolve()
 				.then(function(){
@@ -46,7 +65,6 @@ module.exports = function (router)
 					}
 
 					let date_formated = moment(date, 'mm/DD/YYYY').format('YYYY-mm-DD');
-					console.log(date_formated);
 					let data = {
 						name: name,
 						description: description,
