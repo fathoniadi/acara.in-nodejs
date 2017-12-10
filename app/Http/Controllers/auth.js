@@ -12,6 +12,50 @@ module.exports = function (router)
 				});
 	});
 
+	router.post('/register', function(req, res, next){
+		let email = req.body.email;
+		let password = req.body.password;
+		let cpassword = req.body.cpassword;
+		let name = req.body.name;
+
+		if(password != cpassword)
+		{
+			return res.send({status: 400, message: "Password dan Konfirmasi Password tidak sama"});
+		}
+
+		promise.resolve()
+			   .then(function(){
+			   	return [bcrypt.hash(password, 10), User.where("email", email).fetch()];
+			   })
+			   .spread(function(resultBcrypt, resultUser)
+			   {
+					if(resultUser)
+					{
+						return res.send({status: 400, message: "Email sudah terdaftar"});
+					}			
+
+				   	var user = {
+	                    email : email,
+		                password : resultBcrypt,
+		                name: name
+					};
+
+					return new User().save(user);
+
+			   })
+			   .then(function(result){
+			   		let data = result.toJSON()
+					if(!result)
+			   		{
+			   			return res.json({status: 400, message: "Tidak bisa menyimpan data user baru"});
+			   		}
+					return res.send({status: 200})
+			   })
+			   // .catch(function(){
+			   // 		return res.send(400);
+			   // });
+	});
+
 	router.post('/login', function(req, res, next){
 		let email = req.body.email;
 		let password = req.body.password;
